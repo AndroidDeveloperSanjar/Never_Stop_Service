@@ -11,14 +11,15 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class ExampleService extends Service {
     private int counter = 0;
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mBuilder;
-    public static final String NOTIFICATION_CHANNEL_ID = "10001";
+    public static final String NOTIFICATION_CHANNEL_ID = "myServiceID";
     @Override
     public void onCreate() {
         super.onCreate();
@@ -26,7 +27,7 @@ public class ExampleService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        updateService();
+        startTimer();
         return START_STICKY;
     }
 
@@ -43,32 +44,38 @@ public class ExampleService extends Service {
 
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
-        {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "NOTIFICATION_CHANNEL_NAME", importance);
             assert mNotificationManager != null;
             mBuilder.setChannelId(NOTIFICATION_CHANNEL_ID);
             mNotificationManager.createNotificationChannel(notificationChannel);
-
         }
         assert mNotificationManager != null;
         mNotificationManager.notify(1, mBuilder.build());
         startForeground(1,mBuilder.build());
     }
-    public void updateService(){
-        do {
-            noticationHelper(getApplicationContext(), "Data  " + (counter++));
-            try {
-                TimeUnit.SECONDS.sleep(2);
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }while (counter >= 0);
+    private Timer timer;
+    private TimerTask timerTask;
+
+    public void startTimer(){
+        timer = new Timer();
+        initTimerTask();
+        timer.schedule(timerTask,2000,2000);
     }
+    public void initTimerTask(){
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                noticationHelper(getApplicationContext(),"Data " + (counter++));
+            }
+        };
+    }
+
 
     @Override
     public void onDestroy() {
+
         super.onDestroy();
     }
 
